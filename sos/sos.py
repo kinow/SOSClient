@@ -33,13 +33,13 @@ class SensorObservationService (QObject):
     def capabilitiesUrl(url):
         _url = QUrl (url)
         _url.addQueryItem("Service", "SOS")
-        _url.addQueryItem("AcceptVersions", "1.0.0")
+        _url.addQueryItem("AcceptVersions", "2.0.0")
         _url.addQueryItem("Request","GetCapabilities")
         return _url
     
     @property
     def version(self):
-        return '1.0.0'
+        return '2.0.0'
 
     @property
     def url (self):
