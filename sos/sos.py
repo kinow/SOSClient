@@ -179,7 +179,7 @@ class SensorObservationService (QObject):
         root.setAttribute('xmlns:xsi',"http://www.w3.org/2001/XMLSchema-instance")
         root.setAttribute('xsi:schemaLocation',"http://www.opengis.net/sos/1.0 http://schemas.opengis.net/sos/1.0.0/sosGetObservation.xsd")
         root.setAttribute('service',"SOS")
-        root.setAttribute('version',"1.0.0")
+        root.setAttribute('version',"2.0.0")
         root.setAttribute('srsName',self[offering].srsName)
         doc.appendChild(root)
         
@@ -282,7 +282,7 @@ class SensorObservationService (QObject):
             result.appendChild(operator)
         
         responseFormat = doc.createElement ("responseFormat")
-        responseFormat.appendChild (doc.createTextNode('text/xml;subtype="om/1.0.0"'))
+        responseFormat.appendChild (doc.createTextNode('text/xml;subtype="om/2.0.0"'))
         root.appendChild (responseFormat)
         
         resultModelElement = doc.createElement ("resultModel")
@@ -384,18 +384,17 @@ class SOSObservationOffering ():
     Observation offering data
     """
     def __init__(self) :
-        self.id = ""
-        self.name = ""
-        self.description = ""
+        self.identifier = ""
+        self.procedure = ""
+        self.procedureDescriptionFormats = []
+        self.observableProperty = ""
         self.srsName = ""
-        self.boundedBy = None
-        self.time = None
-        self.proceduresList = []
-        self.observedPropertiesList = []
-        self.featureOfInterestList = []
-        self.responseFormat = ""
-        self.resultModel = []
-        self.responseMode = ""
+        self.observedArea = None
+        self.phenomenonTime = None
+        self.resultTime = None
+        self.responseFormat = []
+        self.observationType = ""
+        self.featureOfInterestType = ""
         
 class FilterRequest (object):
     """

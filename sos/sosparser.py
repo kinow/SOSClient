@@ -32,7 +32,7 @@ class SOSCapabilitiesParser (XMLParser):
         xml = XMLParser.parse(self, self.capabilities.xml)
 
         node, version = self.searchFirst (xml, "@version")
-        if not node or not node.localName() == "Capabilities" or not version in ["1.0", "1.0.0"]:
+        if not node or not node.localName() == "Capabilities" or not version in ["1.0", "2.0.0"]:
             if node.localName() == "ExceptionReport":
                 node, exceptionCode = self.searchFirst(node, "Exception@exceptionCode")
                 _, exceptionText = self.searchFirst(node, "ExceptionText")
@@ -49,13 +49,16 @@ class SOSCapabilitiesParser (XMLParser):
                 opParser = XMLParserFactory.getInstance ("SOSOperationMetadata")
                 for opNode, opName in self.search (node, "Operation@name"):
                     self.capabilities.operationsMetadata[str(opName)] = opParser().parse(opNode)
-            elif value == "Filter_Capabilities":
-                self.capabilities.filterCapabilities = XMLParserFactory.getInstance ("SOSFilterCapabilities")().parse(node)
-            elif value == "Contents":
+            elif value == "filterCapabilities":
+                fcNode, _ = self.searchFirst(node, "Filter_Capabilities")
+                if fcNode:
+                    self.capabilities.filterCapabilities = XMLParserFactory.getInstance ("SOSFilterCapabilities")().parse(fcNode)
+            elif value == "contents":
+                contentsNode, _ = self.searchFirst(node, "Contents")
                 ooParser = XMLParserFactory.getInstance ("SOSObservationOffering")
-                for ooNode, ooId in self.search (node, "ObservationOfferingList/ObservationOffering@id"):
+                for ooNode, _ in self.search (contentsNode, "offering/ObservationOffering"):
+                    _, ooId = self.searchFirst(ooNode, "identifier")
                     self.capabilities.observationOfferingList[str(ooId)] = ooParser().parse(ooNode)
-
         return self.capabilities
 
 class SOSServiceIdentificationParser (XMLParser):
@@ -98,32 +101,41 @@ class SOSObservationOfferingParser (XMLParser):
     def parse (self, xml):
         xml = XMLParser.parse(self, xml)
 
-        _, self.offering.id = self.searchFirst (xml, "@id")
-        _, self.offering.name = self.searchFirst (xml, "name")
-        _, self.offering.description = self.searchFirst (xml, "description")
-        boundedByNode, boundedByType = self.searchFirst (xml, "boundedBy/*")
-        _, self.offering.srsName = self.searchFirst (boundedByNode, "@srsName")
-        if boundedByType == "Envelope":
-            self.offering.boundedBy = GMLParser.rectangleFromGMLEnvelope(boundedByNode)
-        elif boundedByType == "Box":
-            self.offering.boundedBy = GMLParser.rectangleFromGMLBox(boundedByNode)
+        _, self.offering.identifier = self.searchFirst (xml, "identifier")
+        _, self.offering.procedure = self.searchFirst (xml, "procedure")
+        for _, value in self.search (xml, "procedureDescriptionFormat"):
+            self.offering.procedureDescriptionFormats.append(value)
+        _, self.offering.observableProperty = self.searchFirst (xml, "observableProperty")
+        
+        observedAreaNode, observedAreaType = self.searchFirst (xml, "observedArea/*")
+        _, self.offering.srsName = self.searchFirst (observedAreaNode, "@srsName")
+        if observedAreaType == "Envelope":
+            self.offering.observedArea = GMLParser.rectangleFromGMLEnvelope(boundedByNode)
+        elif observedAreaType == "Box":
+            self.offering.observedArea = GMLParser.rectangleFromGMLBox(boundedByNode)
         else:
             geo = GMLParser.geometryFromGML(boundedByNode)
             if geo:                
-                self.offering.boundedBy = geo.boundingBox()
+                self.offering.observedArea = geo.boundingBox()
             else:
-                self.offering.boundedBy = QgsRectangle()
-        timeNode, timePrimitive = self.searchFirst (xml, "time/*")
+                self.offering.observedArea = QgsRectangle()
+        timeNode, timePrimitive = self.searchFirst (xml, "phenomenonTime/*")
         if timePrimitive:
             try:
                 gmlTimeParser = XMLParserFactory.getInstance ("GML" + timePrimitive)
-                self.offering.time = gmlTimeParser().parse(timeNode)
+                self.offering.phenomenonTime = gmlTimeParser().parse(timeNode)
             except NotImplementedError:
-                self.offering.time = QgsTime()
+                self.offering.phenomenonTime = QgsTime()
+                
+        resultTimeNode, resultTimePrimitive = self.searchFirst (xml, "resultTime/*")
+        if resultTimePrimitive:
+            try:
+                gmlTimeParser = XMLParserFactory.getInstance ("GML" + resultTimePrimitive)
+                self.offering.resultTime = gmlTimeParser().parse(resultTimeNode)
+            except NotImplementedError:
+                self.offering.resultTime = QgsTime()
         
-        self.offering.proceduresList = []
-        for _, value in self.search (xml, "procedure@href"):
-            self.offering.proceduresList.append(value)
+        _, self.offering.procedure = self.searchFirst(xml, "procedure@href")
         
         self.offering.observedPropertiesList = []
         for _, value in self.search (xml, "observedProperty@href"):
@@ -134,7 +146,7 @@ class SOSObservationOfferingParser (XMLParser):
             self.offering.featureOfInterestList.append(value)
 
         for _, value in self.search (xml, "responseFormat"):
-            if value in ['text/xml;subtype="om/1.0.0"']:
+            if value in ['text/xml;subtype="om/2.0.0"']:
                 self.offering.responseFormat = value
                 break
 
