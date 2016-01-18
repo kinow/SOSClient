@@ -387,14 +387,14 @@ class SOSObservationOffering ():
         self.identifier = ""
         self.procedure = ""
         self.procedureDescriptionFormats = []
-        self.observableProperty = ""
+        self.observableProperties = []
         self.srsName = ""
         self.observedArea = None
         self.phenomenonTime = None
         self.resultTime = None
-        self.responseFormat = []
-        self.observationType = ""
         self.featureOfInterestType = ""
+        self.responseFormats = []
+        self.observationTypes = []
         
 class FilterRequest (object):
     """

@@ -105,20 +105,22 @@ class SOSObservationOfferingParser (XMLParser):
         _, self.offering.procedure = self.searchFirst (xml, "procedure")
         for _, value in self.search (xml, "procedureDescriptionFormat"):
             self.offering.procedureDescriptionFormats.append(value)
-        _, self.offering.observableProperty = self.searchFirst (xml, "observableProperty")
+        for _, value in self.search (xml, "observableProperty"):
+            _, self.offering.observableProperties.append(value)
         
         observedAreaNode, observedAreaType = self.searchFirst (xml, "observedArea/*")
-        _, self.offering.srsName = self.searchFirst (observedAreaNode, "@srsName")
-        if observedAreaType == "Envelope":
-            self.offering.observedArea = GMLParser.rectangleFromGMLEnvelope(boundedByNode)
-        elif observedAreaType == "Box":
-            self.offering.observedArea = GMLParser.rectangleFromGMLBox(boundedByNode)
-        else:
-            geo = GMLParser.geometryFromGML(boundedByNode)
-            if geo:                
-                self.offering.observedArea = geo.boundingBox()
+        if observedAreaNode:
+            _, self.offering.srsName = self.searchFirst (observedAreaNode, "@srsName")
+            if observedAreaType == "Envelope":
+                self.offering.observedArea = GMLParser.rectangleFromGMLEnvelope(observedAreaNode)
+            elif observedAreaType == "Box":
+                self.offering.observedArea = GMLParser.rectangleFromGMLBox(observedAreaNode)
             else:
-                self.offering.observedArea = QgsRectangle()
+                geo = GMLParser.geometryFromGML(observedAreaNode)
+                if geo:                
+                    self.offering.observedArea = geo.boundingBox()
+                else:
+                    self.offering.observedArea = QgsRectangle()
         timeNode, timePrimitive = self.searchFirst (xml, "phenomenonTime/*")
         if timePrimitive:
             try:
@@ -135,28 +137,13 @@ class SOSObservationOfferingParser (XMLParser):
             except NotImplementedError:
                 self.offering.resultTime = QgsTime()
         
-        _, self.offering.procedure = self.searchFirst(xml, "procedure@href")
-        
-        self.offering.observedPropertiesList = []
-        for _, value in self.search (xml, "observedProperty@href"):
-            self.offering.observedPropertiesList.append(value)
-            
-        self.offering.featureOfInterestList = []
-        for _, value in self.search (xml, "featureOfInterest@href"):
-            self.offering.featureOfInterestList.append(value)
+        _, self.offering.featureOfInterestType = self.searchFirst (xml, "featureOfInterestType")
 
         for _, value in self.search (xml, "responseFormat"):
-            if value in ['text/xml;subtype="om/2.0.0"']:
-                self.offering.responseFormat = value
-                break
-
-        for _, value in self.search (xml, "resultModel"):
-            self.offering.resultModel.append(value)
-
-        for _, value in self.search (xml, "responseMode"):
-            if value in ['inline']:
-                self.offering.responseMode = value
-                break
+            self.offering.responseFormats.append(value)
+        
+        for _, value in self.search (xml, "observationType"):  
+            _, self.offering.observationTypes.append(value)
 
         return self.offering
 
