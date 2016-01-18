@@ -392,9 +392,9 @@ class SOSObservationOffering ():
         self.observedArea = None
         self.phenomenonTime = None
         self.resultTime = None
-        self.featureOfInterestType = ""
         self.responseFormats = []
         self.observationTypes = []
+        self.featureOfInterestType = ""
         
 class FilterRequest (object):
     """

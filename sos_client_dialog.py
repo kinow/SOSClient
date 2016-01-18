@@ -203,17 +203,25 @@ class SOSClientDialog(QtGui.QDialog, WidgetFactory.getClass('sos_client_dialog')
         offer = self.cmbOfferings.itemData(index) if index > -1 else ""
         QgsDebug ("on_cmbOfferings_activated {}: {}".format(index, offer))
         if offer in self.service.observationOfferingList:
-            propertiesList = QStringListCheckableModel(self.service[offer].observedPropertiesList)
+            propertiesList = QStringListCheckableModel(self.service[offer].observableProperties)
             propertiesList.dataChanged.connect(self.updateLayerName)
             self.lstProperties.setModel(propertiesList)
-            featuresList = QStringListCheckableModel(self.service[offer].featureOfInterestList)
+            operationsMetadata = self.service.operationsMetadata
+            featureOfInterestList= []
+            if operationsMetadata:
+                getFoIOp = operationsMetadata['GetFeatureOfInterest']
+                if getFoIOp:
+                    featureOfInterestList = getFoIOp.parameters['featureOfInterest']
+            featuresList = QStringListCheckableModel(featureOfInterestList)
             featuresList.dataChanged.connect(self.featuresSelectedChange)
             self.lstFeatures.setModel(featuresList)
-            self.lstProcedures.setModel(QStringListCheckableModel(self.service[offer].proceduresList))
-            self.cmbFilterScalarOperands.setModel(QtGui.QStringListModel(self.service[offer].observedPropertiesList))
-            self.filterRequest.scalarOperand = self.service[offer].observedPropertiesList[0]
+            procedureList = []
+            procedureList.append(self.service[offer].procedure)
+            self.lstProcedures.setModel(QStringListCheckableModel(procedureList))
+            self.cmbFilterScalarOperands.setModel(QtGui.QStringListModel(self.service[offer].observableProperties))
+            self.filterRequest.scalarOperand = self.service[offer].observableProperties[0]
             self.srsName = self.service[offer].srsName
-            self.cmbResultModel.setModel(QtGui.QStringListModel(self.service[offer].resultModel))
+            #self.cmbResultModel.setModel(QtGui.QStringListModel(self.service[offer].resultModel)) # TODO: ?
             
         self.updateLayerName ()
         
