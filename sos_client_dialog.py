@@ -306,7 +306,7 @@ class SOSClientDialog(QtGui.QDialog, WidgetFactory.getClass('sos_client_dialog')
             self.messageBar.pushMessage(self.tr("Capabilities downloaded"),QgsMessageBar.INFO,3)
             self.htmlView.setText (unicode(self.service))
             for offer in self.service.observationOfferingList:
-                    self.cmbOfferings.addItem("%s (%s)" % (self.service[offer].name,self.service[offer].id), self.service[offer].id)
+                    self.cmbOfferings.addItem("%s (%s)" % (self.service[offer].identifier,self.service[offer].identifier), self.service[offer].identifier)
                     
             index = self.cmbOfferings.currentIndex()
             if index > -1: self.cmbOfferings.activated.emit(index)
